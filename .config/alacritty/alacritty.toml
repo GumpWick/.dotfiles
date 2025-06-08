@@ -1,0 +1,74 @@
+[window]
+
+dynamic_padding = true
+# decorations = "None"
+# opacity = 0.98
+opacity = 0.96
+
+[colors]
+  [colors.primary]
+    background = "#101010"
+
+[font]
+
+normal.family = "Roboto Mono Nerd Font"
+bold.family = "Roboto Mono Nerd Font"
+italic.family = "Roboto Mono Nerd Font"
+bold_italic.family = "Roboto Mono Nerd Font"
+
+size = 11
+
+[scrolling]
+multiplier = 5
+
+[[keyboard.bindings]]
+key = "Up"
+mods = "Shift"
+action = "ScrollHalfPageUp"
+
+[[keyboard.bindings]]
+key = "Down"
+mods = "Shift"
+action = "ScrollHalfPageDown"
+
+[[keyboard.bindings]]
+key = "PageUp"
+action = "ScrollPageUp"
+
+[[keyboard.bindings]]
+key = "PageDown"
+action = "ScrollPageDown"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
