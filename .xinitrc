@@ -13,7 +13,7 @@ xset r rate 250 50 &
 clipster -d -f ~/.config/clipster/clipster.ini &
 export MOZ_GTK_TITLEBAR_DECORATION=none
 setxkbmap -option caps:escape &
-xinput --set-prop "ELAN2204:00 04F3:3109 Touchpad" "libinput Scrolling Pixel Distance" 20 &
+xinput --set-prop "ELAN2204:00 04F3:3109 Touchpad" "libinput Scrolling Pixel Distance" 30 &
 xinput --set-prop "pointer:Logitech K400 Plus" "libinput Natural Scrolling Enabled" 1 &
 libinput-gestures-setup start &
 dwmblocks & 
