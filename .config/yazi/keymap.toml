@@ -162,7 +162,11 @@ prepend_keymap = [
     { on = "<A-p>", run = "plugin hide-preview", desc = "Hide or show preview" },
     { on = "M", run = "plugin max-preview", desc = "Maximize or restore preview" },
     { on = "f", run = "plugin jump-to-char", desc = "Jump to char" },
+    { on = [ "c", "p" ], run = "plugin command", desc = "Yazi command prompt" },
+    { on = [ ":" ], run = "plugin custom-shell -- zsh --wait", desc = "custom-shell as default" },
 ]
+
+
 
 [tasks]
 

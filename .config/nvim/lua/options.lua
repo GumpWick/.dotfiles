@@ -85,6 +85,9 @@ vim.opt.ruler = true
 -- Afficher la position relative dans le fichier (top, bottom, etc.)
 vim.opt.showcmd = true
 
+
+vim.o.shell = "/bin/bash"
+
 -- opt.colorcolumn = "80"
 
 vim.api.nvim_set_keymap('n', '<CR>', ':nohlsearch<CR>', { noremap = true, silent = true })

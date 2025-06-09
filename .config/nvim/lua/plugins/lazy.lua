@@ -918,48 +918,50 @@ require("lazy").setup({
 
   { "moll/vim-bbye" },
 
-  {
-      "3rd/image.nvim",
-      config = function()
-          require("image").setup({
-              backend = "ueberzug",
-              processor = "magick_rock", -- or "magick_cli"
-              integrations = {
-                  markdown = {
-                      enabled = true,
-                      clear_in_insert_mode = false,
-                      download_remote_images = true,
-                      only_render_image_at_cursor = false,
-                      floating_windows = false, -- if true, images will be rendered in floating markdown windows
-                      filetypes = { "markdown", "vimwiki" }, -- markdown extensions (ie. quarto) can go here
-                  },
-                  neorg = {
-                      enabled = true,
-                      filetypes = { "norg" },
-                  },
-                  typst = {
-                      enabled = true,
-                      filetypes = { "typst" },
-                  },
-                  html = {
-                      enabled = false,
-                  },
-                  css = {
-                      enabled = false,
-                  },
-              },
-              max_width = nil,
-              max_height = nil,
-              max_width_window_percentage = nil,
-              max_height_window_percentage = 50,
-              window_overlap_clear_enabled = false, -- toggles images when windows are overlapped
-              window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "snacks_notif", "scrollview", "scrollview_sign" },
-              editor_only_render_when_focused = false, -- auto show/hide images when the editor gains/looses focus
-              tmux_show_only_in_active_window = false, -- auto show/hide images in the correct Tmux window (needs visual-activity off)
-              hijack_file_patterns = { "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.avif" }, -- render image files as images when opened
-          })
-      end
-  },
+  -- {"nvim-telescope/telescope-media-files.nvim"},
+
+  -- {
+  --     "3rd/image.nvim",
+  --     config = function()
+  --         require("image").setup({
+  --             backend = "ueberzug",
+  --             processor = "magick_rock", -- or "magick_cli"
+  --             integrations = {
+  --                 markdown = {
+  --                     enabled = true,
+  --                     clear_in_insert_mode = false,
+  --                     download_remote_images = true,
+  --                     only_render_image_at_cursor = false,
+  --                     floating_windows = false, -- if true, images will be rendered in floating markdown windows
+  --                     filetypes = { "markdown", "vimwiki" }, -- markdown extensions (ie. quarto) can go here
+  --                 },
+  --                 neorg = {
+  --                     enabled = true,
+  --                     filetypes = { "norg" },
+  --                 },
+  --                 typst = {
+  --                     enabled = true,
+  --                     filetypes = { "typst" },
+  --                 },
+  --                 html = {
+  --                     enabled = false,
+  --                 },
+  --                 css = {
+  --                     enabled = false,
+  --                 },
+  --             },
+  --             max_width = nil,
+  --             max_height = nil,
+  --             max_width_window_percentage = nil,
+  --             max_height_window_percentage = 50,
+  --             window_overlap_clear_enabled = false, -- toggles images when windows are overlapped
+  --             window_overlap_clear_ft_ignore = { "cmp_menu", "cmp_docs", "snacks_notif", "scrollview", "scrollview_sign" },
+  --             editor_only_render_when_focused = false, -- auto show/hide images when the editor gains/looses focus
+  --             tmux_show_only_in_active_window = false, -- auto show/hide images in the correct Tmux window (needs visual-activity off)
+  --             hijack_file_patterns = { "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.avif" }, -- render image files as images when opened
+  --         })
+  --     end
+  -- },
 
   { "mbbill/undotree" },
 
@@ -1489,6 +1491,17 @@ require("lazy").setup({
               timeout = 3000,
           },
           quickfile = { enabled = true },
+
+          -- image = {
+          --     enabled = false,
+          --
+          --     formats = {
+          --     },
+          --
+          --     doc = {
+          --         enabled = false,
+          --     }
+          -- },
           lazygit = {
               enabled = true,
               configure = true,
@@ -1747,22 +1760,59 @@ require("lazy").setup({
 
   { "tpope/vim-fugitive" },
 
-  -- {
-  --   "kdheepak/lazygit.nvim",
-  --
-  --   cmd = {
-  --     "LazyGit",
-  --     "LazyGitConfig",
-  --     "LazyGitCurrentFile",
-  --     "LazyGitFilter",
-  --     "LazyGitFilterCurrentFile",
-  --   },
-  --
-  --   dependencies = {
-  --     "nvim-lua/plenary.nvim",
-  --   },
-  -- },
+  -- Lua
+  {"shortcuts/no-neck-pain.nvim"},
 
+  -- Lua
+  {
+      "folke/zen-mode.nvim",
+      opts = {
+          window = {
+              backdrop = 0.95, -- shade the backdrop of the Zen window. Set to 1 to keep the same as Normal
+              -- height and width can be:
+              -- * an absolute number of cells when > 1
+              -- * a percentage of the width / height of the editor when <= 1
+              -- * a function that returns the width or the height
+              width = 120, -- width of the Zen window
+              height = 1, -- height of the Zen window
+              -- by default, no options are changed for the Zen window
+              -- uncomment any of the options below, or add other vim.wo options you want to apply
+              options = {
+                  -- signcolumn = "no", -- disable signcolumn
+                  -- number = false, -- disable number column
+                  -- relativenumber = false, -- disable relative numbers
+                  -- cursorline = false, -- disable cursorline
+                  -- cursorcolumn = false, -- disable cursor column
+                  -- foldcolumn = "0", -- disable fold column
+                  -- list = false, -- disable whitespace characters
+              },
+          },
+          plugins = {
+              options = {
+                  enabled = true,
+                  ruler = false, -- disables the ruler text in the cmd line area
+                  showcmd = false, -- disables the command in the last line of the screen
+                  -- you may turn on/off statusline in zen mode by setting 'laststatus' 
+                  -- statusline will be shown only if 'laststatus' == 3
+                  laststatus = 3,
+              },
+              -- twilight = { enabled = true }, -- enable to start Twilight when zen mode opens
+              gitsigns = { enabled = true },
+              -- tmux = { enabled = false },
+              -- todo = { enabled = false },
+              alacritty = {
+                  enabled = false,
+                  font = "14",
+              },
+          },
+          -- callback where you can add custom code when the Zen window opens
+          on_open = function(win)
+          end,
+          -- callback where you can add custom code when the Zen window closes
+          on_close = function()
+          end,
+      }
+  },
 
   {
     {

@@ -2,8 +2,8 @@
 
 static const Block blocks[] = {
 	/*Icon*/	/*Command*/		/*Update Interval*/	/*Update Signal*/
-    {"",		"checkupdates.sh",		600,			2},
     {"",		"clipboard_history",		0,			17},
+    {"",		"checkupdates.sh",		600,			2},
 	{"",		"vap-battery",		5,			0},
 	/*{"",		"vap-bluetooth",	40,			6},*/
 	{"",		"vap-internet",		25,			3},

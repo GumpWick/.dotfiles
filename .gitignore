@@ -23,5 +23,4 @@ Session.vim
 *.log
 
 # Ignore les dossiers .git.bak partout dans le dépôt
-.git.bak/
-
+**/.git*/

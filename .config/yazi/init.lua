@@ -36,3 +36,16 @@ require("full-border"):setup({
 	-- Available values: ui.Border.PLAIN, ui.Border.ROUNDED
 	type = ui.Border.ROUNDED,
 })
+-- DuckDB plugin configuration
+require("duckdb"):setup({
+    mode = "standard", -- ou "summarized"
+    row_id = true,
+    minmax_column_width = 25,
+    column_fit_factor = 10.0
+})
+
+require("custom-shell"):setup({
+    history_path = "default",
+    save_history = true,
+})
+
