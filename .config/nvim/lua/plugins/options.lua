@@ -65,33 +65,34 @@ vim.api.nvim_create_autocmd("FileType", {
 
 
 
+-- vim.keymap.set('n', '<leader>gh', '<cmd>lua vim.lsp.buf.hover()<cr>', opts)
 
--- Fonction pour désactiver le plugin de rendu Markdown
-local function disable_markdown_render()
-  vim.cmd('RenderMarkdown disable')
-end
-
--- Fonction pour réactiver le plugin de rendu Markdown
-local function enable_markdown_render()
-  vim.cmd('RenderMarkdown enable')
-end
-
-
--- Configuration de la touche de raccourci pour le hover LSP
-vim.keymap.set('n', '<leader>gh', function()
-  disable_markdown_render() -- Désactiver le plugin de rendu Markdown
-  vim.lsp.buf.hover() -- Appeler la fonction de hover LSP
-
-  -- Définir une autocommande pour réactiver le plugin de rendu Markdown lors d'un mouvement de curseur
-  local group = vim.api.nvim_create_augroup('MarkdownRenderGroup', { clear = true })
-  vim.api.nvim_create_autocmd('CursorMoved', {
-    group = group,
-    callback = function()
-      enable_markdown_render() -- Réactiver le plugin de rendu Markdown
-      vim.api.nvim_del_augroup_by_name('MarkdownRenderGroup') -- Supprimer l'autocommande après utilisation
-    end,
-  })
-end)
+-- -- Fonction pour désactiver le plugin de rendu Markdown
+-- local function disable_markdown_render()
+--   vim.cmd('RenderMarkdown disable')
+-- end
+--
+-- -- Fonction pour réactiver le plugin de rendu Markdown
+-- local function enable_markdown_render()
+--   vim.cmd('RenderMarkdown enable')
+-- end
+--
+--
+-- -- Configuration de la touche de raccourci pour le hover LSP
+-- vim.keymap.set('n', '<leader>gh', function()
+--   disable_markdown_render() -- Désactiver le plugin de rendu Markdown
+--   vim.lsp.buf.hover() -- Appeler la fonction de hover LSP
+--
+--   -- Définir une autocommande pour réactiver le plugin de rendu Markdown lors d'un mouvement de curseur
+--   local group = vim.api.nvim_create_augroup('MarkdownRenderGroup', { clear = true })
+--   vim.api.nvim_create_autocmd('CursorMoved', {
+--     group = group,
+--     callback = function()
+--       enable_markdown_render() -- Réactiver le plugin de rendu Markdown
+--       vim.api.nvim_del_augroup_by_name('MarkdownRenderGroup') -- Supprimer l'autocommande après utilisation
+--     end,
+--   })
+-- end)
 
 
 vim.cmd("doautocmd BufReadPost")

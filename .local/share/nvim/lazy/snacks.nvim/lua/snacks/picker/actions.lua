@@ -517,6 +517,34 @@ function M.select_all(picker)
   picker.list:select_all()
 end
 
+
+function M.select(picker)
+  picker.list:select()
+end
+
+
+
+-- function M:unselect_all()
+--   for _, item in pairs(self.selected) do
+--     self:unselect(item)
+--   end
+-- end
+
+
+--- Deselects all selected items in the list
+function M.unselect_all(picker)
+  if picker.list and picker.list.set_selected then
+    -- Clear all selected items
+    picker.list:set_selected({})
+    picker.list:set_target()
+    -- Actualiser / recalculer si nécessaire la liste
+    if picker.find then
+      picker:find()
+    end
+  end
+end
+
+
 function M.cmd(picker, item)
   picker:close()
   if item and item.cmd then

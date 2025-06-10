@@ -20,12 +20,87 @@ local function should_show_image()
     return ui and ui.width > 50 and ui.height > 40  -- Ajuste ces valeurs selon tes besoins
 end
 
--- local function in_git_repo()
---     local handle = io.popen("git rev-parse --is-inside-work-tree 2>/dev/null")
---     local result = handle:read("*a")
---     handle:close()
---     return result:match("true") ~= nil
--- end
+
+
+local picker_state = {
+    history = {},
+}
+
+local function navigate_to_parent_smooth(picker)
+    local current_cwd = picker.opts.cwd or vim.loop.cwd()
+    local parent_dir = vim.fs.dirname(current_cwd)
+
+    if parent_dir and parent_dir ~= current_cwd then
+        -- Enregistre le répertoire actuel dans l’historique
+        table.insert(picker_state.history, current_cwd)
+
+        -- Mise à jour du répertoire
+        vim.cmd("cd " .. vim.fn.fnameescape(parent_dir))
+        picker:close()
+
+        vim.defer_fn(function()
+            require("snacks").picker.files({
+                cwd = parent_dir,
+                prompt_title = vim.fs.basename(parent_dir),
+            })
+        end, 50)
+    end
+end
+
+local function navigate_back_smooth(picker)
+    local previous = table.remove(picker_state.history)
+    if previous and vim.fn.isdirectory(previous) == 1 then
+        vim.cmd("cd " .. vim.fn.fnameescape(previous))
+        picker:close()
+
+        vim.defer_fn(function()
+            require("snacks").picker.files({
+                cwd = previous,
+                prompt_title = vim.fs.basename(previous),
+            })
+        end, 50)
+    else
+        vim.notify("📁 Aucun répertoire précédent dans l’historique", vim.log.levels.INFO)
+    end
+end
+
+
+local function explorer_up_and_cd()
+    if vim.fn.exists(":SnackExplorerUp") == 2 then
+        vim.cmd("SnackExplorerUp")
+    else
+        print("Commande SnackExplorerUp non trouvée, adapter")
+    end
+
+    local cwd = vim.fn.getcwd()
+    local parent = vim.fn.fnamemodify(cwd, ":h")
+    vim.cmd("cd " .. parent)
+    print("cd to: " .. parent)
+end
+
+local function explorer_cd_to_selected()
+
+    local path = vim.fn.expand("<cfile>")
+
+    if path == "" then
+        path = vim.fn.getcwd()
+    else
+        -- Conversion en chemin absolu
+        if not path:find("^/") then
+            path = vim.fn.getcwd() .. "/" .. path
+        end
+
+        -- Vérification du type
+        if vim.fn.isdirectory(path) == 0 then
+            path = vim.fn.fnamemodify(path, ":h")
+        end
+    end
+
+    vim.cmd("cd " .. vim.fn.fnameescape(path))
+    print("cd to: " .. path)
+end
+
+
 
 require("lazy").setup({
   { "catppuccin/nvim",               name = "catppuccin", priority = 1000 },
@@ -93,6 +168,25 @@ require("lazy").setup({
               -- height = 0.4,
               prompt_position = "top",
               preview_cutoff = 120,
+            },
+
+            mappings = {
+                i = {
+                    ["<C-up>"] = function(prompt_bufnr)
+                        local current_picker =
+                        require("telescope.actions.state").get_current_picker(prompt_bufnr)
+                        -- cwd is only set if passed as telescope option
+                        local cwd = current_picker.cwd and tostring(current_picker.cwd)
+                        or vim.loop.cwd()
+                        local parent_dir = vim.fs.dirname(cwd)
+
+                        require("telescope.actions").close(prompt_bufnr)
+                        require("telescope.builtin").find_files {
+                            prompt_title = vim.fs.basename(parent_dir),
+                            cwd = parent_dir,
+                        }
+                    end,
+                },
             },
           },
           git_files = {
@@ -656,13 +750,16 @@ require("lazy").setup({
     'MeanderingProgrammer/render-markdown.nvim',
     dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' }, -- if you prefer nvim-web-devicons
     opts = {
-      heading = {
-        enabled = false,
-        sign = false,
-      },
-      code = {
-        sign = false,
-      }
+        heading = {
+            enabled = true,
+            width = 'block',
+            sign = false,
+        },
+        code = {
+            enabled = true,
+            width = 'block',
+            sign = false,
+        }
     },
   },
 
@@ -1093,6 +1190,12 @@ require("lazy").setup({
                 -- directory in a tmux pane on the right
             })
 
+            vim.api.nvim_create_autocmd("User", {
+                pattern = "MiniFilesBufferCreate",
+                callback = function(args)
+                    vim.keymap.set("n", "<Tab>", "<Right>", { buffer = args.data.buf_id, remap = true })
+                end,
+            })
 
             -- Here I define my custom keymaps in a centralized place
             opts.custom_keymaps = {
@@ -1104,6 +1207,7 @@ require("lazy").setup({
                 -- Don't use "i" as it conflicts wit insert mode
                 preview_image = "<C-Right>",
                 -- preview_image_popup = "<M-i>",
+
             }
 
             opts.windows = vim.tbl_deep_extend("force", opts.windows or {}, {
@@ -1400,7 +1504,7 @@ require("lazy").setup({
             -- },
             -- Open the current working directory
             {
-                "<leader>e",
+                "<leader>E",
                 function()
                     require("mini.files").open(vim.uv.cwd(), true)
                 end,
@@ -1507,6 +1611,7 @@ require("lazy").setup({
               configure = true,
           },
 
+
           picker = {
               enabled = true,
               matcher = {
@@ -1520,25 +1625,232 @@ require("lazy").setup({
               -- debug = {
               --     scores = true, -- show scores in the list
               -- },
+              sources = {
+
+
+                  explorer = {
+
+                      finder = "explorer",
+                      sort = { fields = { "sort" } },
+                      supports_live = true,
+                      tree = true,
+                      watch = true,
+                      diagnostics = true,
+                      diagnostics_open = false,
+                      git_status = true,
+                      git_status_open = false,
+                      git_untracked = true,
+                      follow_file = true,
+                      focus = "list",
+                      auto_close = false,
+                      jump = { close = false },
+                      layout = { preset = "sidebar", preview = false },
+                      -- to show the explorer to the right, add the below to
+                      -- your config under `opts.picker.sources.explorer`
+                      -- layout = { layout = { position = "right" } },
+                      formatters = {
+                          file = { filename_only = true },
+                          severity = { pos = "right" },
+                      },
+                      matcher = { sort_empty = false, fuzzy = false },
+                      -- config = function(opts)
+                      --     return require("snacks.picker.source.explorer").setup(opts)
+                      -- end,
+                      win = {
+                          list = {
+                              keys = {
+                                  ["/"] = "toggle_focus",-- IMPORTANT
+                                  ["<BS>"] = "explorer_up",
+                                  ["<CR>"] = "confirm",
+                                  ["<S-Tab>"] = { "unselect_all", mode = { "i", "n" } },-- IMPORTANT
+                                  ["<Tab>"] = { "select", mode = { "i", "n" } },-- IMPORTANT
+                                  ["l"] = "confirm",
+                                  ["h"] = "explorer_close", -- close directory
+                                  ["a"] = "explorer_add",
+                                  ["d"] = "explorer_del",
+                                  ["r"] = "explorer_rename",
+                                  ["c"] = "explorer_copy",
+                                  ["m"] = "explorer_move",
+                                  ["o"] = "explorer_open", -- open with system application
+                                  ["P"] = "toggle_preview",
+                                  ["y"] = { "explorer_yank", mode = { "n", "x" } },
+                                  ["p"] = "explorer_paste",
+                                  ["u"] = "explorer_update",
+                                  ["<c-c>"] = "tcd",
+                                  ["<leader>/"] = "picker_grep",
+                                  ["<c-t>"] = "terminal",
+                                  ["."] = "explorer_focus",
+                                  ["I"] = "toggle_ignored",
+                                  ["H"] = "toggle_hidden",
+                                  ["Z"] = "explorer_close_all",
+                                  ["]g"] = "explorer_git_next",
+                                  ["[g"] = "explorer_git_prev",
+                                  ["]d"] = "explorer_diagnostic_next",
+                                  ["[d"] = "explorer_diagnostic_prev",
+                                  ["]w"] = "explorer_warn_next",
+                                  ["[w"] = "explorer_warn_prev",
+                                  ["]e"] = "explorer_error_next",
+                                  ["[e"] = "explorer_error_prev",
+
+                                  ["<Left>"] = "explorer_up",
+                                  ["<Right>"] = "explorer_focus",
+
+                                  ["<C-left>"] = {explorer_up_and_cd, mode = {"i", "n"}},
+                                  ["<C-right>"] = {explorer_cd_to_selected, mode = {"i", "n"}},
+                              },
+                          },
+                      },
+                  },
+              },
+
               win = {
+                  -- input window
                   input = {
                       keys = {
-                          ["<Tab>"] = { "confirm", mode = { "i", "n" } },
-                      }
-                  }
+                          -- to close the picker on ESC instead of going to normal mode,
+                          -- add the following keymap to your config
+                          -- ["<Esc>"] = { "close", mode = { "n", "i" } },
+                          ["/"] = "toggle_focus",                                                           -- IMPORTANT
+                          -- ["<C-Down>"] = { "history_forward", mode = { "i", "n" } },
+                          -- ["<C-Up>"] = { "history_back", mode = { "i", "n" } },
+                          ["<C-up>"] = {navigate_to_parent_smooth, mode = {"i", "n"}},
+                          ["<C-down>"] = {navigate_back_smooth, mode = {"i", "n"}},
+                          ["<C-left>"] = {navigate_to_parent_smooth, mode = {"i", "n"}},
+                          ["<C-right>"] = {navigate_back_smooth, mode = {"i", "n"}},
+                          ["<C-c>"] = { "cancel", mode = "i" },
+                          ["<C-w>"] = { "<c-s-w>", mode = { "i" }, expr = true, desc = "delete word" },
+                          ["<CR>"] = { "confirm", mode = { "n", "i" } },
+                          ["<Down>"] = { "list_down", mode = { "i", "n" } },
+                          ["<Esc>"] = "cancel",
+                          -- ["<S-CR>"] = { { "pick_win", "jump" }, mode = { "n", "i" } },
+                          -- ["<S-Tab>"] = { "select_and_prev", mode = { "i", "n" } },-- IMPORTANT
+                          -- ["<Tab>"] = { "select_and_next", mode = { "i", "n" } },-- IMPORTANT
+
+                          ["<S-Tab>"] = { "unselect_all", mode = { "i", "n" } },-- IMPORTANT
+                          ["<Tab>"] = { "select", mode = { "i", "n" } },-- IMPORTANT
+                          ["<Up>"] = { "list_up", mode = { "i", "n" } },
+                          ["<a-d>"] = { "inspect", mode = { "n", "i" } },
+                          ["<a-f>"] = { "toggle_follow", mode = { "i", "n" } },
+                          ["<a-h>"] = { "toggle_hidden", mode = { "i", "n" } },-- IMPORTANT
+                          ["<a-i>"] = { "toggle_ignored", mode = { "i", "n" } },
+                          ["<a-m>"] = { "toggle_maximize", mode = { "i", "n" } },
+                          ["<a-p>"] = { "toggle_preview", mode = { "i", "n" } },
+                          ["<a-w>"] = { "cycle_win", mode = { "i", "n" } },
+                          ["<c-a>"] = { "select_all", mode = { "n", "i" } },
+                          ["<c-b>"] = { "preview_scroll_up", mode = { "i", "n" } },
+                          ["<c-d>"] = { "list_scroll_down", mode = { "i", "n" } },
+                          ["<c-f>"] = { "preview_scroll_down", mode = { "i", "n" } },
+                          ["<c-g>"] = { "toggle_live", mode = { "i", "n" } },
+                          ["<c-j>"] = { "list_down", mode = { "i", "n" } },
+                          ["<c-k>"] = { "list_up", mode = { "i", "n" } },
+                          ["<c-n>"] = { "list_down", mode = { "i", "n" } },
+                          ["<c-p>"] = { "list_up", mode = { "i", "n" } },
+                          ["<c-q>"] = { "qflist", mode = { "i", "n" } },
+                          ["<c-s>"] = { "edit_split", mode = { "i", "n" } },
+                          ["<c-t>"] = { "tab", mode = { "n", "i" } },
+                          ["<c-u>"] = { "list_scroll_up", mode = { "i", "n" } },
+                          ["<c-v>"] = { "edit_vsplit", mode = { "i", "n" } },
+                          ["<c-r>#"] = { "insert_alt", mode = "i" },
+                          ["<c-r>%"] = { "insert_filename", mode = "i" },
+                          ["<c-r><c-a>"] = { "insert_cWORD", mode = "i" },
+                          ["<c-r><c-f>"] = { "insert_file", mode = "i" },
+                          ["<c-r><c-l>"] = { "insert_line", mode = "i" },
+                          ["<c-r><c-p>"] = { "insert_file_full", mode = "i" },
+                          ["<c-r><c-w>"] = { "insert_cword", mode = "i" },
+                          ["<c-w>H"] = "layout_left",
+                          ["<c-w>J"] = "layout_bottom",
+                          ["<c-w>K"] = "layout_top",
+                          ["<c-w>L"] = "layout_right",
+                          ["?"] = "toggle_help_input",
+                          ["G"] = "list_bottom",
+                          ["gg"] = "list_top",
+                          ["j"] = "list_down",
+                          ["k"] = "list_up",
+                          ["q"] = "close",
+                      },
+                      b = {
+                          minipairs_disable = true,
+                      },
+                  },
+                  -- result list window
+                  list = {
+                      keys = {
+
+                          ["<C-up>"] = {navigate_to_parent_smooth, mode = {"i", "n"}},
+                          ["<C-left>"] = {navigate_to_parent_smooth, mode = {"i", "n"}},
+
+                          ["<C-down>"] = {navigate_back_smooth, mode = {"i", "n"}},
+                          ["<C-right>"] = {navigate_back_smooth, mode = {"i", "n"}},
+                          ["/"] = "toggle_focus",-- IMPORTANT
+                          ["<2-LeftMouse>"] = "confirm",
+                          ["<CR>"] = "confirm",-- IMPORTANT
+                          ["<Down>"] = "list_down",
+                          ["<Esc>"] = "cancel",
+                          ["<S-CR>"] = { { "pick_win", "jump" } },
+                          -- ["<S-Tab>"] = { "select_and_prev", mode = { "n", "x" } },-- IMPORTANT
+                          -- ["<Tab>"] = { "select_and_next", mode = { "n", "x" } },-- IMPORTANT
+
+                          ["<S-Tab>"] = { "unselect_all", mode = { "i", "n" } },-- IMPORTANT
+                          ["<Tab>"] = { "select", mode = { "i", "n" } },-- IMPORTANT
+                          ["<Up>"] = "list_up",
+                          ["<a-d>"] = "inspect",
+                          ["<a-f>"] = "toggle_follow",
+                          ["<a-h>"] = "toggle_hidden",-- IMPORTANT
+                          ["<a-i>"] = "toggle_ignored",
+                          ["<a-m>"] = "toggle_maximize",
+                          ["<a-p>"] = "toggle_preview",
+                          ["<a-w>"] = "cycle_win",
+                          ["<c-a>"] = "select_all",
+                          ["<c-b>"] = "preview_scroll_up",
+                          ["<c-d>"] = "list_scroll_down",
+                          ["<c-f>"] = "preview_scroll_down",
+                          ["<c-j>"] = "list_down",
+                          ["<c-k>"] = "list_up",
+                          ["<c-n>"] = "list_down",
+                          ["<c-p>"] = "list_up",
+                          ["<c-q>"] = "qflist",
+                          ["<c-s>"] = "edit_split",
+                          ["<c-t>"] = "tab",
+                          ["<c-u>"] = "list_scroll_up",
+                          ["<c-v>"] = "edit_vsplit",
+                          ["<c-w>H"] = "layout_left",
+                          ["<c-w>J"] = "layout_bottom",
+                          ["<c-w>K"] = "layout_top",
+                          ["<c-w>L"] = "layout_right",
+                          ["?"] = "toggle_help_list",
+                          ["G"] = "list_bottom",
+                          ["gg"] = "list_top",
+                          ["i"] = "focus_input",
+                          ["j"] = "list_down",
+                          ["k"] = "list_up",
+                          ["q"] = "close",
+                          ["zb"] = "list_scroll_bottom",
+                          ["zt"] = "list_scroll_top",
+                          ["zz"] = "list_scroll_center",
+                      },
+                      wo = {
+                          conceallevel = 2,
+                          concealcursor = "nvc",
+                      },
+                  },
               },
           },
+
+
+
+          input = { enabled = true },
+          win = {
+              enabled = true,
+              show = true,
+
+              backdrop = false,
+          },
+
           scroll = { enabled = false },
-          explorer = { enabled = false },
           words = { enabled = false },
           indent = { enabled = false },
-          input = { enabled = false },
           scope = { enabled = false },
           statuscolumn = { enabled = false },
-          win = {
-              enabled = false,
-              show = false,
-          },
           dim = { enabled = false },
           terminal = {
               enabled = false,
@@ -1680,9 +1992,8 @@ require("lazy").setup({
           -- Picker (other)
           { "<leader>:", function() Snacks.picker.command_history() end, desc = "Command History" },
           { "<M-n>", function() Snacks.picker.notifications({ wrap = true }) end, desc = "Notification History" },
-
           { "<leader>un", function() Snacks.notifier.hide() end, desc = "Dismiss All Notifications" },
-          -- { "<leader>E", function() Snacks.explorer() end, desc = "File Explorer" },
+          { "<leader>e", function() Snacks.explorer() end, desc = "File Explorer" },        -- ~~~~~~~~~~~~~~~ <leader>E correspond à mini.files (explorer flottant) ~~~~~~~~~~~~~~~~~~
 
           -- Picker (file)
           { "<leader>ff", function() Snacks.picker.files() end, desc = "Picker Find Files" },
@@ -1690,12 +2001,13 @@ require("lazy").setup({
           { "<leader>ga", function() Snacks.picker.lsp_workspace_symbols() end, desc = "LSP Workspace Symbols" },
           { "<leader>fk", function() Snacks.picker.keymaps() end, desc = "Keymaps" },
           { "<leader>fp", function() Snacks.picker.projects() end, desc = "Projects" },
+          { "<leader>fd", function() Snacks.explorer() end, desc = "File Explorer" },
 
           -- Picker (Git)
           { "<leader>fb", function() Snacks.gitbrowse() end, desc = "Git Browse" },
           { "<leader>fc", function() Snacks.picker.git_log_file() end, desc = "Git Commit File" },
           { "<leader>fC", function() Snacks.picker.git_log() end, desc = "Git Commit Files" },
-          { "<leader>fd", function() Snacks.picker.git_diff() end, desc = "Git Diff (Hunks)" },
+          { "<leader>fh", function() Snacks.picker.git_diff() end, desc = "Git Diff (Hunks)" },
           { "<leader>lg", function() Snacks.lazygit() end, desc = "Lazygit" },
 
           -- Picker (Diagnostics)
@@ -2424,7 +2736,7 @@ require("lazy").setup({
 
           lsp_zero.default_keymaps({ buffer = bufnr })
           local opts = { noremap = true, silent = true }
-          -- vim.keymap.set('n', '<leader>gh', '<cmd>lua vim.lsp.buf.hover()<cr>', opts)
+          vim.keymap.set('n', '<leader>gh', '<cmd>lua vim.lsp.buf.hover()<cr>', opts)
           vim.keymap.set('n', '<leader>gd', '<cmd>lua vim.lsp.buf.definition()<cr>', opts)
           -- vim.keymap.set('n', '<leader>gs', '<cmd>lua vim.lsp.buf.signature_help()<cr>', opts)
           vim.keymap.set("n", "<leader>gl", ":Trouble lsp toggle focus=true<cr>", {silent = true})
