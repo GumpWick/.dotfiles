@@ -216,10 +216,13 @@ end, { desc = "Toggle colorcolumn at 80" })
 -- Sauvegarde du répertoire courant au démarrage
 vim.g.startup_dir = vim.fn.getcwd()
 
-vim.keymap.set('n', '<leader>z', function()
-    vim.cmd('cd ' .. vim.g.startup_dir)
-    vim.notify('Revenu dans : ' .. vim.g.startup_dir, vim.log.levels.INFO, { title = 'Répertoire initial' })
-end, { desc = 'Revenir au répertoire de lancement de Neovim' })
+vim.keymap.set("n", "<leader>z", function()
+    vim.ui.input({ prompt = "Path for :Z ", default = "" }, function(input)
+        if input and input ~= "" then
+            vim.cmd("Z " .. input)
+        end
+    end)
+end, { desc = "Run :Z with user input path" })
 
 vim.keymap.set('n', '<leader><BS>', function()
     vim.cmd('cd ' .. vim.g.startup_dir)
