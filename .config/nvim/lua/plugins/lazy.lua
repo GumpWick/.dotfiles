@@ -60,46 +60,9 @@ local function navigate_back_smooth(picker)
             })
         end, 50)
     else
-        vim.notify("📁 Aucun répertoire précédent dans l’historique", vim.log.levels.INFO)
+        vim.notify("📁 No previous directory in history", vim.log.levels.INFO)
     end
 end
-
-
-local function explorer_up_and_cd()
-    if vim.fn.exists(":SnackExplorerUp") == 2 then
-        vim.cmd("SnackExplorerUp")
-    else
-        print("Commande SnackExplorerUp non trouvée, adapter")
-    end
-
-    local cwd = vim.fn.getcwd()
-    local parent = vim.fn.fnamemodify(cwd, ":h")
-    vim.cmd("cd " .. parent)
-    print("cd to: " .. parent)
-end
-
-local function explorer_cd_to_selected()
-
-    local path = vim.fn.expand("<cfile>")
-
-    if path == "" then
-        path = vim.fn.getcwd()
-    else
-        -- Conversion en chemin absolu
-        if not path:find("^/") then
-            path = vim.fn.getcwd() .. "/" .. path
-        end
-
-        -- Vérification du type
-        if vim.fn.isdirectory(path) == 0 then
-            path = vim.fn.fnamemodify(path, ":h")
-        end
-    end
-
-    vim.cmd("cd " .. vim.fn.fnameescape(path))
-    print("cd to: " .. path)
-end
-
 
 
 require("lazy").setup({
@@ -1515,43 +1478,24 @@ require("lazy").setup({
 
   { "sindrets/diffview.nvim" },
 
-  -- {
-  --     "fouladi/toggle-overlength.nvim",
-  --     config = function()
-  --         require("toggle-overlength").setup({
-  --             column_length = 88, -- Set column length to 88
-  --             -- ctermbg = "red", -- Set terminal background color to red
-  --             guibg = "#8B0000"
-  --         })
-  --     end,
-  -- },
-
-  -- {
-  --     'lcheylus/overlength.nvim',
-  --     event = 'BufReadPre',
-  --     config = function()
-  --         require('overlength').setup({
-  --             enabled = true,
-  --             colors = {
-  --                 -- ctermfg = nil,
-  --                 -- ctermbg = 'darkgrey',
-  --                 -- fg = nil,
-  --                 bg = '#8B0000',
-  --             },
-  --             textwidth_mode = 1,
-  --             default_overlength = 80,
-  --             grace_length = 1,
-  --             highlight_to_eol = true,
-  --             disable_ft = {
-  --                 'qf', 'help', 'man', 'checkhealth',
-  --                 'lazy', 'packer', 'NvimTree',
-  --                 'Telescope', 'WhichKey',
-  --                 "tex",  "text",
-  --             },
-  --         })
-  --     end
-  -- },
-
+  {
+      -- You can also use the codeberg mirror if you want to use the plugin without relying on GitHub
+      -- "https://codeberg.org/CodingThunder/zincoxide.git" -- for HTTPS
+      -- "git@codeberg.org:CodingThunder/zincoxide.git"     -- for SSH
+      -- NOTE: the username on both github and codeberg are different
+      "thunder-coding/zincoxide",
+      opts = {
+          -- name of zoxide binary in your "$PATH" or path to the binary
+          -- the command is executed using vim.fn.system()
+          -- eg. "zoxide" or "/usr/bin/zoxide"
+          zincoxide_cmd = "zoxide",
+          -- Kinda experimental as of now
+          complete = true,
+          -- Available options { "tabs", "window", "global" }
+          behaviour = "tabs",
+      },
+      cmd = { "Z", "Zg", "Zt", "Zw" },
+  },
 
   {'akinsho/toggleterm.nvim', version = "*", config = true},
 
@@ -1695,8 +1639,8 @@ require("lazy").setup({
                                   ["<Left>"] = "explorer_up",
                                   ["<Right>"] = "explorer_focus",
 
-                                  ["<C-left>"] = {explorer_up_and_cd, mode = {"i", "n"}},
-                                  ["<C-right>"] = {explorer_cd_to_selected, mode = {"i", "n"}},
+                                  ["<C-left>"] = {"explorer_up_and_cd", mode = {"i", "n"}},
+                                  ["<C-right>"] = {"explorer_cd", mode = {"i", "n"}},
                               },
                           },
                       },

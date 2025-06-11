@@ -76,6 +76,22 @@ function M.actions.explorer_focus(picker)
   picker:find()
 end
 
+function M.actions.explorer_up_and_cd(picker)
+  local path = vim.fs.dirname(picker:cwd())
+  picker:set_cwd(path)
+  vim.cmd("cd " .. vim.fn.fnameescape(path))
+  vim.notify("Changed directory to: " .. path, vim.log.levels.INFO)
+  picker:find()
+end
+
+function M.actions.explorer_cd(picker)
+  local path = picker:dir()
+  picker:set_cwd(path)
+  vim.cmd("cd " .. vim.fn.fnameescape(path))
+  vim.notify("Changed directory to: " .. path, vim.log.levels.INFO)
+  picker:find()
+end
+
 function M.actions.explorer_open(_, item)
   if item then
     local _, err = vim.ui.open(item.file)
