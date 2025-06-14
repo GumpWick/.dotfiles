@@ -143,11 +143,11 @@ if [ -f "$HOME/.last_dir" ]; then
 fi
 
 
-if [[ "$XDG_SESSION_TYPE" == "x11" ]]; then
-    alias firefox='firefox -P default-release'
-elif [[ "$XDG_SESSION_TYPE" == "wayland" ]]; then
-    alias firefox='firefox -P hyprland'
-fi
+# if [[ "$XDG_SESSION_TYPE" == "x11" ]]; then
+#     alias firefox='firefox -P default-release'
+# elif [[ "$XDG_SESSION_TYPE" == "wayland" ]]; then
+#     alias firefox='firefox -P hyprland'
+# fi
 
 
 
